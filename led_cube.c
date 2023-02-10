@@ -1,12 +1,8 @@
 #include "pico/stdlib.h"
+#include "config.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-
-// define the pins used controlling 74HC595
-#define DATA_PIN 2
-#define CLOCK_PIN 3
-#define LATCH_PIN 4
 
 void init_pins(void)
 {
@@ -21,28 +17,17 @@ void init_pins(void)
 
 uint8_t map[9];
 
-// define the order of 74HC595 chain
-#define MINUS 0
-#define FIRST_PLUS 1
-#define SECOND_PLUS 2
-#define THIRD_PLUS 3
-#define FOURTH_PLUS 4
-#define FIFTH_PLUS 5
-#define SIXTH_PLUS 6
-#define SEVENTH_PLUS 7
-#define EIGHTH_PLUS 8
-
 void init_map(void)
 {
-	map[0] = MINUS;
-	map[1] = FIRST_PLUS;
-	map[2] = SECOND_PLUS;
-	map[3] = THIRD_PLUS;
-	map[4] = FOURTH_PLUS;
-	map[5] = FIFTH_PLUS;
-	map[6] = SIXTH_PLUS;
-	map[7] = SEVENTH_PLUS;
-	map[8] = EIGHTH_PLUS;
+	map[0] = CHIP_0;
+	map[1] = CHIP_1;
+	map[2] = CHIP_2;
+	map[3] = CHIP_3;
+	map[4] = CHIP_4;
+	map[5] = CHIP_5;
+	map[6] = CHIP_6;
+	map[7] = CHIP_7;
+	map[8] = CHIP_8;
 }
 
 void send_raw_data(uint8_t data[9])
@@ -103,6 +88,7 @@ void test_every_pin(void)
 
 int main()
 {
+	stdio_init_all();
 	init_pins();
 	init_map();
 
