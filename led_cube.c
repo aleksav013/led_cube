@@ -1,8 +1,13 @@
 #include "pico/stdlib.h"
+#include "hardware/timer.h"
 #include "config.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
+#include <math.h>
+
+uint8_t map[9];
 
 void init_pins(void)
 {
@@ -12,10 +17,11 @@ void init_pins(void)
 	gpio_set_dir(DATA_PIN, GPIO_OUT);
 	gpio_set_dir(CLOCK_PIN, GPIO_OUT);
 	gpio_set_dir(LATCH_PIN, GPIO_OUT);
-        printf("pin initialization successful!\n");
-}
 
-uint8_t map[9];
+	gpio_init(LED_PIN);
+	gpio_set_dir(LED_PIN, GPIO_OUT);
+	gpio_put(LED_PIN, 1);
+}
 
 void init_map(void)
 {
@@ -52,21 +58,34 @@ void send_data(uint8_t floor, uint64_t on_floor)
 	send_raw_data(data);
 }
 
-void draw(uint64_t data[8])
+int64_t zero_byte(alarm_id_t id, void* user_data)
 {
-	for (size_t i = 0; i < 8; i++) {
-		send_data((1 << i), data[i]);
+	memset(user_data, 0, 1);
+	return 0;
+}
+
+void draw(uint64_t data[8], uint32_t time)
+{
+	volatile uint8_t ind = 1;
+	add_alarm_in_ms(time, (void*)zero_byte, (void*)&ind, false);
+
+	while (ind) {
+		for (size_t i = 0; i < 8; i++) {
+			send_data((1 << i), data[i]);
+		}
+		tight_loop_contents();
 	}
 }
 
-
-void test(void)
+void test_every_floor(void)
 {
 	for (size_t i = 0; i < 8; i++) {
 		send_data((1 << i), 0xFFFFFFFFFFFFFFFF);
-		sleep_ms(200);
+		sleep_ms(125);
 	}
 }
+
+#define PIN(x, y) (1LL << ((y) * 8 + (x)))
 
 void test_every_pin(void)
 {
@@ -76,25 +95,45 @@ void test_every_pin(void)
 	for (size_t x = 0; x < 8; x++) {
 		for (size_t y = 0; y < 8; y++) {
 			for (size_t z = 0; z < 8; z++) {
-				data[z] = 1LL << (y * 8 + x);
-				draw(data);
+				data[z] = PIN(x, y);
+			}
+			draw(data, 125);
+			for (size_t z = 0; z < 8; z++) {
 				data[z] = 0;
-				sleep_ms(20);
 			}
 		}
 	}
 }
 
+void sphere(void)
+{
+	uint64_t data[8];
+
+	for (size_t i = 0; i < 7; i++) {
+		memset(data, 0, 64);
+		for (int8_t x = 0; x < 8; x++) {
+			for (int8_t y = 0; y < 8; y++) {
+				for (int8_t z = 0; z < 8; z++) {
+					if ((3.5-x)*(3.5-x) + (3.5-y)*(3.5-y) + (3.5-z)*(3.5-z) < 1.0*i*i) {
+						data[z] = PIN(x, y);
+					}
+				}
+			}
+		}
+		draw(data, 200 - i * 20);
+	}
+}
 
 int main()
 {
 	stdio_init_all();
 	init_pins();
 	init_map();
+	test_every_floor();
+	test_every_pin();
 
 	while(1) {
-		test();
-		test_every_pin();
+		sphere();
 	}
 
 	return 0;
