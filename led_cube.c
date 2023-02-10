@@ -1,6 +1,7 @@
 #include "pico/stdlib.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 // define the pins used controlling 74HC595
 #define DATA_PIN 2
@@ -42,7 +43,6 @@ void init_map(void)
 	map[6] = SIXTH_PLUS;
 	map[7] = SEVENTH_PLUS;
 	map[8] = EIGHTH_PLUS;
-
 }
 
 void send_raw_data(uint8_t data[9])
@@ -62,12 +62,8 @@ void send_raw_data(uint8_t data[9])
 void send_data(uint8_t floor, uint64_t on_floor)
 {
 	uint8_t data[9];
-
 	data[0] = floor;
-	for (size_t i = 0; i < 8; i++) {
-		data[i] = (on_floor >> (8 * i)) & 0xFF;
-	}
-
+	memcpy(&data[1], &on_floor, 8);
 	send_raw_data(data);
 }
 
@@ -90,10 +86,12 @@ void test(void)
 void test_every_pin(void)
 {
 	uint64_t data[8];
+	memset(data, 0, 64);
+
 	for (size_t x = 0; x < 8; x++) {
 		for (size_t y = 0; y < 8; y++) {
 			for (size_t z = 0; z < 8; z++) {
-				data[z] = 1 << (y * 8 + x);
+				data[z] = 1LL << (y * 8 + x);
 				draw(data);
 				data[z] = 0;
 				sleep_ms(20);
