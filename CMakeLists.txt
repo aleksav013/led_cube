@@ -15,7 +15,10 @@ pico_sdk_init()
 
 if (TARGET tinyusb_device)
 	add_executable(led_cube
-	        led_cube.c
+	        src/init.c
+	        src/draw.c
+	        src/tests.c
+	        src/main.c
 	        )
 
 	# pull in common dependencies
